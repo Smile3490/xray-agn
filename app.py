@@ -12,7 +12,7 @@ st.set_page_config(page_title="pPXF Interactive Viewer", layout="wide")
 # ========================
 @st.cache_data
 def load_results():
-    return pd.read_csv("data/ppxf_results.csv")
+    return pd.read_csv("tables/ppxf_results.csv")
 
 df = load_results()
 id_col = "id"
