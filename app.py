@@ -24,7 +24,6 @@ Explore pPXF results:
 
 - Interactive scatter plots (Plotly)
 - Hover to show ID, redshift
-- Click a point → load cutouts & fitting results
 - Column calculator for custom derived quantities
 - Built-in BPT diagram mode
 """)
@@ -75,8 +74,8 @@ if mode == "Custom scatter":
 # BPT mode: columns are fixed
 if mode == "BPT diagram":
     # Compute BPT axes
-    df["NII_Ha"] = df["[NII]6583_d_flux"] / (df["Halpha_flux"]+df["Halpha_b_flux"])
-    df["OIII_Hb"] = df["[OIII]5007_d_flux"] / (df["Hbeta_flux"]+df["Hbeta_b_flux"])
+    df["NII_Ha"] = df["[NII]6583_d_flux"] / (df["Halpha_flux"])
+    df["OIII_Hb"] = df["[OIII]5007_d_flux"] / (df["Hbeta_flux"])
 
     df["log_NII_Ha"] = np.log10(df["NII_Ha"])
     df["log_OIII_Hb"] = np.log10(df["OIII_Hb"])
