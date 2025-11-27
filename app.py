@@ -8,7 +8,7 @@ st.set_page_config(page_title="pPXF Results Viewer", layout="wide")
 # ---- Load Data ----
 @st.cache_data
 def load_results():
-    df = pd.read_csv("data/ppxf_results.csv")
+    df = pd.read_csv("tables/ppxf_results.csv")
     return df
 
 df = load_results()
