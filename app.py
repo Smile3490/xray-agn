@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from streamlit_plotly_events import plotly_events
 import os
 
 st.set_page_config(page_title="pPXF Interactive Viewer", layout="wide")
@@ -121,28 +120,29 @@ hover_columns = [
     id_col, "redshift"
 ]
 
-fig = px.scatter(
-    df,
-    x=xcol,
-    y=ycol,
-    color=color_by if color_by != "None" else None,
-    hover_data=hover_columns,
-    height=650,
-)
+if color_by != "None":
+    fig = px.scatter(
+        df,
+        x=xcol,
+        y=ycol,
+        color=color_by,
+        hover_data=hover_columns,
+        height=650,
+    )
+else:
+    fig = px.scatter(
+        df,
+        x=xcol,
+        y=ycol,
+        hover_data=hover_columns,
+        height=650,
+    )
 
 if mode == "BPT diagram":
     add_bpt_boundaries(fig)
     
 fig.update_traces(marker=dict(size=8, opacity=0.8))
-
-
-selected_points = plotly_events(
-    fig,
-    click_event=True,
-    hover_event=False,
-    select_event=True,
-    key="bpt_plot",
-)
+selected_points = st.plotly_chart(fig, use_container_width=True)
 
 
 # ========================
@@ -155,15 +155,14 @@ st.header("Selected Source Details")
 # Note: Streamlit currently exposes Plotly click events via st.session_state
 clicked_id = None
 
-if selected_points:
-    # selected_points is a list of dicts like:
-    # [{'curveNumber': 0, 'pointNumber': 12, 'x': ..., 'y': ...}]
-    idx = selected_points[0]["pointNumber"]
-    clicked_id = df.iloc[idx][id_col]
+if "selectedpoints" in st.session_state:
+    pts = st.session_state["selectedpoints"]
+    if pts and len(pts) > 0:
+        idx = pts[0]   # index in the dataframe
+        clicked_id = df.iloc[idx][id_col]
 
-# If no click: fallback to manual selection
+# Manual fallback selector
 selected_id = clicked_id or st.selectbox("Choose source:", df[id_col].unique())
-
 
 row = df[df[id_col] == selected_id].iloc[0]
 
