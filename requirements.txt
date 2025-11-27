@@ -4,3 +4,4 @@ pandas
 matplotlib
 astropy
 plotly
+streamlit-plotly-events
