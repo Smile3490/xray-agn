@@ -30,6 +30,31 @@ Explore pPXF results:
 """)
 
 
+# BPT boundaries
+def add_bpt_boundaries(fig):
+    import numpy as np
+
+    # Kauffmann 2003
+    x = np.linspace(-2.0, 0., 200)
+    y = 0.61 / (x - 0.05) + 1.3
+    fig.add_scatter(x=x, y=y, mode="lines",
+                    line=dict(color="blue", dash="dash"),
+                    name="Kauffmann 2003")
+
+    # Kewley 2001
+    x = np.linspace(-2.0, 0.4, 200)
+    y = 0.61 / (x - 0.47) + 1.19
+    fig.add_scatter(x=x, y=y, mode="lines",
+                    line=dict(color="red", dash="solid"),
+                    name="Kewley 2001")
+
+    # Seyfert/LINER division (Kewley 2006)
+    x = np.linspace(-0.18, 1.5, 200)
+    y = 1.05 * x + 0.45
+    fig.add_scatter(x=x, y=y, mode="lines",
+                    line=dict(color="black", dash="dot"),
+                    name="Seyfert/LINER (Kewley 2006)")
+
 # ========================
 # Sidebar Controls
 # ========================
@@ -113,6 +138,9 @@ else:
         height=650,
     )
 
+if mode == "BPT diagram":
+    add_bpt_boundaries(fig)
+    
 fig.update_traces(marker=dict(size=8, opacity=0.8))
 selected_points = st.plotly_chart(fig, use_container_width=True)
 
@@ -138,9 +166,6 @@ selected_id = clicked_id or st.selectbox("Choose source:", df[id_col].unique())
 
 row = df[df[id_col] == selected_id].iloc[0]
 
-st.subheader(f"Metadata for {selected_id}")
-st.json(row.to_dict())
-
 
 # ========================
 # Show images for this source
@@ -163,3 +188,7 @@ with col2:
         st.image(fit_path)
     else:
         st.write("No fitting result found.")
+
+st.subheader(f"Metadata for {selected_id}")
+st.json(row.to_dict())
+
