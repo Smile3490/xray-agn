@@ -120,23 +120,14 @@ hover_columns = [
     id_col, "redshift"
 ]
 
-if color_by != "None":
-    fig = px.scatter(
-        df,
-        x=xcol,
-        y=ycol,
-        color=color_by,
-        hover_data=hover_columns,
-        height=650,
-    )
-else:
-    fig = px.scatter(
-        df,
-        x=xcol,
-        y=ycol,
-        hover_data=hover_columns,
-        height=650,
-    )
+fig = px.scatter(
+    df,
+    x=xcol,
+    y=ycol,
+    color=color_by if color_by != "None" else None,
+    hover_data=hover_columns,
+    height=650,
+)
 
 if mode == "BPT diagram":
     add_bpt_boundaries(fig)
