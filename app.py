@@ -55,28 +55,20 @@ id_col = "id"
 
 # ---- Scatter Plot ----
 
-if color_by != "None":
-    fig = px.scatter(
-        df,
-        x=xcol,
-        y=ycol,
-        color=color_by,
-        hover_data=[id_col, "redshift"],
-        width=650,
-        height=550,
-    )
-else:
-    fig = px.scatter(
-        df,
-        x=xcol,
-        y=ycol,
-        hover_data=[id_col, "redshift"],
-        width=650,
-        height=550,
-    )
+fig = px.scatter(
+    df,
+    x=xcol,
+    y=ycol,
+    color=color_by if color_by != "None" else 'k',
+    hover_data=[id_col, "redshift"],
+    width=650,
+    height=550,
+)
+
 
 st.plotly_chart(fig, use_container_width=True)
 
+selected = st.plotly_chart(fig, use_container_width=True).selection["points"]
 
 # ---- Select a Source ----
 st.header("Selected Source Details")
