@@ -165,7 +165,7 @@ row = df[df[id_col] == selected_id].iloc[0]
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📄 All Info")
+    st.subheader("All Info")
     info_path = f"info/{selected_id}.png"
     if os.path.exists(info_path):
         st.image(info_path)
@@ -173,7 +173,7 @@ with col1:
         st.write("No info image found.")
 
 with col2:
-    st.subheader("📈 pPXF Fitting Results")
+    st.subheader("pPXF Fitting Results")
     fit_path = f"fitting_results/{selected_id}.png"
     if os.path.exists(fit_path):
         st.image(fit_path)
