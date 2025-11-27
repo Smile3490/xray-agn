@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.express as px
 import os
 
 st.set_page_config(page_title="pPXF Results Viewer", layout="wide")
@@ -23,6 +24,24 @@ This app lets you explore pPXF fitting results:
 - Quick access to line fluxes, errors, EWs, χ²
 """)
 
+
+st.sidebar.header("Column Calculator")
+expr = st.sidebar.text_input(
+    "Enter a column expression (e.g. ppxf_[OIII]5007_d_flux / ppxf_Hbeta_flux)",
+    ""
+)
+colname = st.sidebar.text_input(
+    "Name the column",
+    ""
+)
+
+if expr:
+    try:
+        df[colname] = eval(expr, {"__builtins__": None}, df.to_dict("series"))
+        st.sidebar.success("Column "+colname+" created!")
+    except Exception as e:
+        st.sidebar.error(f"Error: {e}")
+        
 # ---- Sidebar Controls ----
 st.sidebar.header("Plot Controls")
 
@@ -35,19 +54,29 @@ color_by = st.sidebar.selectbox("Color by", ["None"] + list(df.columns))
 id_col = "id"
 
 # ---- Scatter Plot ----
-fig, ax = plt.subplots(figsize=(6, 5))
 
 if color_by != "None":
-    sc = ax.scatter(df[xcol], df[ycol], c=df[color_by], cmap="viridis")
-    plt.colorbar(sc, ax=ax, label=color_by)
+    fig = px.scatter(
+        df,
+        x=xcol,
+        y=ycol,
+        color=color_by,
+        hover_data=[id_col, "redshift"],
+        width=650,
+        height=550,
+    )
 else:
-    ax.scatter(df[xcol], df[ycol])
+    fig = px.scatter(
+        df,
+        x=xcol,
+        y=ycol,
+        hover_data=[id_col, "redshift"],
+        width=650,
+        height=550,
+    )
 
-ax.set_xlabel(xcol)
-ax.set_ylabel(ycol)
-ax.grid(alpha=0.3)
+st.plotly_chart(fig, use_container_width=True)
 
-st.pyplot(fig)
 
 # ---- Select a Source ----
 st.header("Selected Source Details")
