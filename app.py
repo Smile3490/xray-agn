@@ -38,7 +38,7 @@ colname = st.sidebar.text_input(
 
 if calc_expr and colname:
     try:
-        df[new_col_name] = eval(calc_expr, {"df": df})
+        df[colname] = eval(calc_expr, {"df": df})
         st.sidebar.success("Column "+colname+" created!")
     except Exception as e:
         st.sidebar.error(f"Error: {e}")
