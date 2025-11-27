@@ -24,11 +24,12 @@ This app lets you explore pPXF fitting results:
 - Quick access to line fluxes, errors, EWs, χ²
 """)
 
-
+# ---- Sidebar Calculation ----
 st.sidebar.header("Column Calculator")
-expr = st.sidebar.text_input(
-    "Enter a column expression (e.g. ppxf_[OIII]5007_d_flux / ppxf_Hbeta_flux)",
-    ""
+calc_expr = st.sidebar.text_input(
+    "Enter an expression using df[...] syntax:\n\n"
+    'Example:\n'
+    'df["ppxf_[OIII]5007_d_flux"] / df["ppxf_Hbeta_flux"]\n'
 )
 colname = st.sidebar.text_input(
     "Name the column",
@@ -37,7 +38,7 @@ colname = st.sidebar.text_input(
 
 if expr:
     try:
-        df[colname] = eval(expr, {"__builtins__": None}, df.to_dict("series"))
+        df[new_col_name] = eval(calc_expr, {"df": df})
         st.sidebar.success("Column "+colname+" created!")
     except Exception as e:
         st.sidebar.error(f"Error: {e}")
@@ -77,7 +78,8 @@ else:
 
 st.plotly_chart(fig, use_container_width=True)
 
-selected = st.plotly_chart(fig, use_container_width=True).selection["points"]
+#selected = st.plotly_chart(fig, use_container_width=True).selection["points"]
+
 # ---- Select a Source ----
 st.header("Selected Source Details")
 
