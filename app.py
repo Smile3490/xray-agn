@@ -1,60 +1,99 @@
+# app.py
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
 import plotly.express as px
 import os
 
-st.set_page_config(page_title="pPXF Results Viewer", layout="wide")
+st.set_page_config(page_title="pPXF Interactive Viewer", layout="wide")
 
-# ---- Load Data ----
+# ========================
+# Load results table
+# ========================
 @st.cache_data
 def load_results():
-    df = pd.read_csv("tables/ppxf_results.csv")
-    return df
+    return pd.read_csv("data/ppxf_results.csv")
 
 df = load_results()
+id_col = "id"
 
 st.title("🌟 pPXF Interactive Results Dashboard")
 
 st.markdown("""
-This app lets you explore pPXF fitting results:
+Explore pPXF results:
 
-- Interactive scatter plots (e.g. BPT)
-- Click/select a source to view cutouts and spectra
-- Quick access to line fluxes, errors, EWs, χ²
+- Interactive scatter plots (Plotly)
+- Hover to show ID, redshift
+- Click a point → load cutouts & fitting results
+- Column calculator for custom derived quantities
+- Built-in BPT diagram mode
 """)
 
-# ---- Sidebar Calculation ----
-st.sidebar.header("Column Calculator")
-calc_expr = st.sidebar.text_input(
-    "Enter an expression using df[...] syntax:\n\n"
-    'Example:\n'
-    'df["ppxf_[OIII]5007_d_flux"] / df["ppxf_Hbeta_flux"]\n'
-)
-colname = st.sidebar.text_input(
-    "Name the column",
-    ""
-)
 
-if calc_expr and colname:
-    try:
-        df[colname] = eval(calc_expr, {"df": df})
-        st.sidebar.success("Column "+colname+" created!")
-    except Exception as e:
-        st.sidebar.error(f"Error: {e}")
-        
-# ---- Sidebar Controls ----
+# ========================
+# Sidebar Controls
+# ========================
+
 st.sidebar.header("Plot Controls")
 
-xcol = st.sidebar.selectbox("X-axis", df.columns)
-ycol = st.sidebar.selectbox("Y-axis", df.columns)
+mode = st.sidebar.radio(
+    "Plot mode:",
+    ["Custom scatter", "BPT diagram"],
+)
 
-color_by = st.sidebar.selectbox("Color by", ["None"] + list(df.columns))
+# Custom scatter: select columns manually
+if mode == "Custom scatter":
+    xcol = st.sidebar.selectbox("X-axis", df.columns)
+    ycol = st.sidebar.selectbox("Y-axis", df.columns)
+    color_by = st.sidebar.selectbox("Color by", ["None"] + list(df.columns))
 
-# Filter by signal-to-noise or EW if needed
-id_col = "id"
+# BPT mode: columns are fixed
+if mode == "BPT diagram":
+    # Compute BPT axes
+    df["NII_Ha"] = df["[NII]6583_d_flux"] / (df["Halpha_flux"]+df["Halpha_b_flux"])
+    df["OIII_Hb"] = df["[OIII]5007_d_flux"] / (df["Hbeta_flux"]+df["Hbeta_b_flux"])
 
-# ---- Scatter Plot ----
+    df["log_NII_Ha"] = np.log10(df["NII_Ha"])
+    df["log_OIII_Hb"] = np.log10(df["OIII_Hb"])
+
+    xcol = "log_NII_Ha"
+    ycol = "log_OIII_Hb"
+    color_by = st.sidebar.selectbox("Color by", ["None"] + list(df.columns))
+
+    st.sidebar.success("BPT axes generated automatically.")
+
+
+# ========================
+# Column calculator
+# ========================
+
+st.sidebar.header("Column Calculator")
+
+calc_expr = st.sidebar.text_input(
+    "Enter expression using df[...] syntax:\n"
+    'Example:\n'
+    'df["[OIII]5007_d_flux"] / df["Hbeta_flux"]'
+)
+
+new_col_name = st.sidebar.text_input("Name the new column")
+
+if calc_expr and new_col_name:
+    try:
+        df[new_col_name] = eval(calc_expr, {"df": df, "np": np})
+        st.sidebar.success(f"Column '{new_col_name}' created.")
+    except Exception as e:
+        st.sidebar.error(f"Error: {e}")
+
+
+# ========================
+# Interactive Plot
+# ========================
+
+st.header("Interactive Scatter Plot")
+
+hover_columns = [
+    id_col, "redshift"
+]
 
 if color_by != "None":
     fig = px.scatter(
@@ -62,46 +101,63 @@ if color_by != "None":
         x=xcol,
         y=ycol,
         color=color_by,
-        hover_data=[id_col, "redshift"],
-        width=650,
-        height=550,
+        hover_data=hover_columns,
+        height=650,
     )
 else:
     fig = px.scatter(
         df,
         x=xcol,
         y=ycol,
-        hover_data=[id_col, "redshift"],
-        width=650,
-        height=550,
+        hover_data=hover_columns,
+        height=650,
     )
 
-st.plotly_chart(fig, use_container_width=True)
+fig.update_traces(marker=dict(size=8, opacity=0.8))
+selected_points = st.plotly_chart(fig, use_container_width=True)
 
-#selected = st.plotly_chart(fig, use_container_width=True).selection["points"]
 
-# ---- Select a Source ----
+# ========================
+# Select a source (manual & click)
+# ========================
+
 st.header("Selected Source Details")
 
-selected_id = st.selectbox("Choose a source ID:", df[id_col].unique())
+# CLICK HANDLING
+# Note: Streamlit currently exposes Plotly click events via st.session_state
+clicked_id = None
+
+if "selectedpoints" in st.session_state:
+    pts = st.session_state["selectedpoints"]
+    if pts and len(pts) > 0:
+        idx = pts[0]   # index in the dataframe
+        clicked_id = df.iloc[idx][id_col]
+
+# Manual fallback selector
+selected_id = clicked_id or st.selectbox("Choose source:", df[id_col].unique())
+
 row = df[df[id_col] == selected_id].iloc[0]
 
-st.subheader(f"📄 Metadata for {selected_id}")
+st.subheader(f"Metadata for {selected_id}")
 st.json(row.to_dict())
 
-# ---- Display Cutout + Spectrum ----
+
+# ========================
+# Show images for this source
+# ========================
+
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("All Info")
+    st.subheader("📄 All Info")
     info_path = f"info/{selected_id}.png"
     if os.path.exists(info_path):
         st.image(info_path)
     else:
-        st.write("No info found.")
+        st.write("No info image found.")
 
 with col2:
-    st.subheader("Fitting Results")
+    st.subheader("📈 pPXF Fitting Results")
     fit_path = f"fitting_results/{selected_id}.png"
     if os.path.exists(fit_path):
         st.image(fit_path)
