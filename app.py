@@ -54,6 +54,29 @@ def add_bpt_boundaries(fig):
                     line=dict(color="black", dash="dot"),
                     name="Seyfert/LINER (Kewley 2006)")
 
+
+# ========================
+# Column calculator
+# ========================
+
+st.sidebar.header("Column Calculator")
+
+calc_expr = st.sidebar.text_input(
+    "Enter expression using df[...] syntax:\n"
+    'Example:\n'
+    'df["[OIII]5007_d_flux"] / df["Hbeta_flux"]'
+)
+
+new_col_name = st.sidebar.text_input("Name the new column")
+
+if calc_expr and new_col_name:
+    try:
+        df[new_col_name] = eval(calc_expr, {"df": df, "np": np})
+        st.sidebar.success(f"Column '{new_col_name}' created.")
+    except Exception as e:
+        st.sidebar.error(f"Error: {e}")
+
+
 # ========================
 # Sidebar Controls
 # ========================
@@ -86,27 +109,6 @@ if mode == "BPT diagram":
 
     st.sidebar.success("BPT axes generated automatically.")
 
-
-# ========================
-# Column calculator
-# ========================
-
-st.sidebar.header("Column Calculator")
-
-calc_expr = st.sidebar.text_input(
-    "Enter expression using df[...] syntax:\n"
-    'Example:\n'
-    'df["[OIII]5007_d_flux"] / df["Hbeta_flux"]'
-)
-
-new_col_name = st.sidebar.text_input("Name the new column")
-
-if calc_expr and new_col_name:
-    try:
-        df[new_col_name] = eval(calc_expr, {"df": df, "np": np})
-        st.sidebar.success(f"Column '{new_col_name}' created.")
-    except Exception as e:
-        st.sidebar.error(f"Error: {e}")
 
 
 # ========================
